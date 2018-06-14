@@ -21,21 +21,21 @@ The present work extends the [recent approach mentioned above](https://arxiv.org
 
 # 2. Automatic perturbations
 
-The outlines of a technique for explaining the responses of a complex deep learning model(M) are described here. A more in-depth description is given in Section 3 through the technique's pytorch implementation. As mentioned above, a [convolutional neural network (CNN)](https://en.wikipedia.org/wiki/Convolutional_neural_network) is used here for generating perturbations to the inputs of the model M. The model's maximum output element $y_{max}$ to an input $x_o$ is given by
+The outlines of a technique for explaining the responses of a complex deep learning model(M) are described here. A more in-depth description is given in Section 3 through the technique's pytorch implementation. As mentioned above, a [convolutional neural network (CNN)](https://en.wikipedia.org/wiki/Convolutional_neural_network) is used here for generating perturbations to the inputs of the model *M*. The model's maximum output element *y<sub>max</sub>* to an input *x<sub>o</sub>* is given by
 
-$y_{max} = M(x_o)_k$
+*y<sub>max</sub> = M(x<sub>o</sub>)<sub>k</sub>*
 
-where, k is the index of the maximum score class for input $x_o$. The goal here is to produce a perturbed input $x_p$ that minimizes the formerly top class value, i.e.,
+where, k is the index of the maximum score class for input *x<sub>o</sub>*. The goal here is to produce a perturbed input *x<sub>pert</sub>* that minimizes the formerly top class value, i.e.,
 
-$M(x_p)_k \ll y_{max}$
+*M(x<sub>pert</sub>)<sub>k</sub> << y<sub>max</sub>*
 
-In generating the perturbation the input $x_o$ is fed to the CNN. The output after the CNN layers is scaled to resemble the original input's range. The resulting perturbed input $x_p$ is then passed through M and its output $y_p = M(x_p)_k$ is used for calculating the loss for back-propagation:
+In generating the perturbation the input $x_o$ is fed to the CNN. The output after the CNN layers is scaled to resemble the original input's range. The resulting perturbed input x<sub>pert</sub> is then passed through *M* and its output *y<sub>pert</sub> = M(x<sub>pert</sub>)<sub>k</sub>* is used for calculating the loss for back-propagation:
 
-loss = $y_p + l_1$
+*loss = y<sub>pert</sub> + l<sub>1</sub>*
 
-where $l_1 = \sum{C_{l_1}|x_o - x_p|}$, and $C_{l_1}$ is an adjustable coefficient. The loss is then back-propagated and minimized by iteratively modifying the weights and biases of the CNN model. The best CNN parameters allow generating an optimum perturbed input $x_p^{opt}$ that minimizes $y_p$ while at the same time attempting to keep the perturbation $x_p^{(opt)}$ as close as possible to the original input $x_o$. This is an important requirement for avoiding artifact optimization. For instance, $y_p$ may also be minimized by $x_p$ corresponding to an image filled with zeros.
+where *l<sub>1</sub> = C<sub>l<sub>1</sub></sub>&sum;|x<sub>o</sub> - x<sub>pert</sub>|*, the summation is over the elements of *|x<sub>o</sub> - x<sub>pert</sub>|*, and $C_{l_1}$ is an adjustable coefficient. The loss is then back-propagated and minimized by iteratively modifying the weights and biases of the CNN model. The best CNN parameters allow generating an optimum perturbed input *x<sub>pert</sub><sup>(opt)</sup>* that minimizes *y<sub>pert</sub>* while at the same time attempting to keep the perturbation *x<sub>pert</sub><sup>(opt)</sup>*  as close as possible to the original input *x<sub>o</sub>*. This is an important requirement for avoiding artifact optimization. For instance, *y<sub>pert</sub>* may also be drastically reduced by *x<sub>pert</sub>* corresponding to an image filled with zeros.
 
-A post-processing procedure is then performed for analyzing the results. Briefly, this step consists of calculating the nonlinear difference $|x_o - x_p^{(opt)}|^6$ along with some image processing for further highlighting the important differences. This process allows identifying relevant regions in $x_o$ from the model M's point of view. 
+A post-processing procedure is then performed for analyzing the results. Briefly, this step consists of calculating the nonlinear difference *|x<sub>o</sub> - x<sub>pert</sub><sup>(opt)</sup>|<sup>6</sup>* along with image dilation for further highlighting the important differences. This process allows identifying relevant regions in *x<sub>o</sub>* from the model's point of view. 
 
 # 3. Pytorch implementation
 
@@ -356,8 +356,9 @@ As defined in the "forward" method, the input tensor goes through blocks of conv
 The following code back-propagates small changes to the loss and optimizes the CNN weights and biases through gradient descent. This results in CNN parameters that generate an optimum perturbation (pert_img_tensor).
 
 Since the CNN parameters were defined within a pytorch module using native functions, it is very simple to setup the optimizer on these parameters by just invoking:
-
+```python
 torch.optim.Adam(pert_model.parameters(), lr).
+```
 
 As mentioned above, the loss is defined as the value of the maximum class (for the original image) plus a measure of how different is the perturbated image from the original one.
 
