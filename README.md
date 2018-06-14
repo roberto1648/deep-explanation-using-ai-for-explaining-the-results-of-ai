@@ -13,23 +13,33 @@ Insights regarding the decisions of a deep learning model are obtained through p
 
 # 1. Introduction
 
-The application of complex machine learning algorithms to every day problems has achieved considerable [widespread success](https://www.forbes.com/sites/bernardmarr/2016/09/30/what-are-the-top-10-use-cases-for-machine-learning-and-ai/). The machine learning paradigm replaces 'hard coding' with the learning of patterns directly from data. The adoption of machine learning may be viewed as switching to a flexible experimental approach as opposed to a 'theoretical' one in which a programmer is expected to foresee all possible situations. A drawback of this new procedure is that the mechanisms by which the machine learning algorithm reaches a decision are [not necessarily well understood](https://www.technologyreview.com/s/604087/the-dark-secret-at-the-heart-of-ai/). Understanding the logic behind algorithmic outcomes is important for a variety of reasons. One of them is preventing the algorithm from learning non-generalizable artifacts only present in the particular data used to train the machine learning model. For example, image recognition algorithms may take advantage of describing text present on the sides of some photos. Thus, having little or no human supervision over what the model learns risks rendering parts of the models useless for practical applications. Moreover, due to the widespread use of machine learning algorithms [ethical concerns](https://abovethelaw.com/2018/04/ethical-considerations-for-artificial-intelligence/) have to be considered. If anti-discrimination laws ban individuals and companies from certain behaviors then any algorithm affecting society has to also comply with those rules. This matter is particularly pressing since the recent adoption by the European Union of new [data regulations](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation). All the advantages and issues mentioned above have been greatly amplified by the widespread use of deep neural networks that allow a drastic increase in model complexity.
+The application of complex machine learning algorithms to everyday problems has achieved considerable [widespread success](https://www.forbes.com/sites/bernardmarr/2016/09/30/what-are-the-top-10-use-cases-for-machine-learning-and-ai/). The machine learning paradigm replaces 'hard coding' with the learning of patterns directly from data. The adoption of machine learning may be viewed as switching to a flexible experimental approach as opposed to a 'theoretical' one in which a programmer is expected to foresee all possible situations. A drawback of this new procedure is that the mechanisms by which the machine learning algorithm reaches a decision are [not necessarily well understood](https://www.technologyreview.com/s/604087/the-dark-secret-at-the-heart-of-ai/). Understanding the logic behind algorithmic outcomes is important for a variety of reasons. One of them is preventing the algorithm from learning non-generalizable artifacts only present in the particular data used to train the machine learning model. For example, image recognition algorithms may take advantage of labeling text present on the sides of some photos. Thus, having little or no human supervision over what the model learns risks rendering it useless for practical applications. Moreover, due to the extensive use of machine learning algorithms [ethical concerns](https://abovethelaw.com/2018/04/ethical-considerations-for-artificial-intelligence/) have to be carefully considered. If anti-discrimination laws ban individuals and companies from certain behaviors, then any algorithm affecting society has to also comply with those rules. This matter is particularly pressing since the recent adoption by the European Union of new [data regulations](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation). All the advantages and drawbacks mentioned above are amplified through the use of deep neural networks that allow a drastic increase in model complexity.
 
-There have been many efforts for understanding the mechanisms behind machine learning and particularly deep learning algorithms. Indeed, shortly after the introduction of the [first](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf) successful image recognition deep learning model, researchers devised a [perturbational approach](https://cs.nyu.edu/~fergus/papers/zeilerECCV2014.pdf) for revealing the model's inner workings. Other methods for understanding the model responses include the use of optimization algorithms (notably gradient descent since it is already built into neural networks due to their need for back-propagation) for finding the inputs that [optimally activate](https://ai.stanford.edu/~ang/papers/nips09-MeasuringInvariancesDeepNetworks.pdf) certain neurons within the model. [Recent](https://arxiv.org/abs/1704.03296) efforts have combined both approaches by seeking the extraction of optimum perturbations to the inputs that most effectively reduce a given model output. In the latter approach the perturbations are generated in part from a multiplicative mask that is then optimized by back propagation.
+There have been many efforts to understand the mechanisms behind machine learning and particularly deep learning algorithms. Indeed, shortly after the introduction of the [first](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf) successful image recognition deep learning model, researchers devised a [perturbational approach](https://cs.nyu.edu/~fergus/papers/zeilerECCV2014.pdf) for revealing the model's inner workings. Other methods for understanding the model responses include the use of optimization algorithms (notably gradient descent which exploits the back-propagation infrastructure already built into current neural networks) for finding the inputs that [optimally activate](https://ai.stanford.edu/~ang/papers/nips09-MeasuringInvariancesDeepNetworks.pdf) certain neurons. A [Recent](https://arxiv.org/abs/1704.03296) effort combines both approaches by generating perturbations to the inputs that optimally reduce the model output. In the latter approach the perturbations are generated in part from a multiplicative mask that is then optimized by back propagation.
 
-The present work builds on the [recent approach mentioned above](https://arxiv.org/abs/1704.03296) by allowing for more arbitrary perturbations that are automatically derived by a convolutional neural network (CNN) inserted into the process. The CNN's weights and biases for an optimal perturbation are also learned through back-propagation. The optimum perturbation is then analyzed for identifying input regions that are most important for the model's response. The identified important input regions can allow deducing intuitive interpretations of the model decisions.
+The present work extends the [recent approach mentioned above](https://arxiv.org/abs/1704.03296) by allowing for more arbitrary perturbations. The perturbations are now automatically generated by a convolutional neural network (CNN) inserted into the process. The CNN's weights and biases are learned through gradient descend and back-propagation. The optimum perturbation thus obtained is analyzed for identifying the input regions that are most relevant to the model's response. It is shown below that the identified important input regions can lead to intuitive interpretations of the model decisions.
 
 # 2. Automatic perturbations
 
-The technique for explaining the outcomes of a complex deep learning model M is described here. A [convolutional neural network (CNN)](https://en.wikipedia.org/wiki/Convolutional_neural_network) is used for understanding the decisions of the trained model M. For a given input x0 to the model resulting in some top class ymax = M(x0)[k] (where k is the maximum class index), the CNN produces automatically an optimal perturbed input xpert = x0 + dx. The perturbated input xpert results in a maximal reduction of the formerly top class value, i.e., M(xpert)[k] << ymax. An optimum perturbation xpert_opt is obtained through optimizing the weights of the perturbing CNN model through a gradient descent algorithm based on gradient back-propagation. The particular model M studied here is the VGG19 model trained on the imagenet dataset for image recognition.
+The outlines of a technique for explaining the responses of a complex deep learning model(M) are described here. A more in-depth description is given in Section 3 through the technique's pytorch implementation. As mentioned above, a [convolutional neural network (CNN)](https://en.wikipedia.org/wiki/Convolutional_neural_network) is used here for generating perturbations to the inputs of the model M. The model's maximum output element $y_{max}$ to an input $x_o$ is given by
 
-In the forward direction, the output after the CNN layers is scaled to resemble the original input's range. The resulted perturbed input xpert is then passed through M and its output score ypert = M(xpert)[k] is used for calculating the loss for back-propagation. The loss is given by ypert + l1_term, where l1_term is proportional to the difference between xpert and x0. Thus, the back-propagation process aims to reduce ypert while at the same time attempting to keep xpert as close as possible to x0. This is an important requirement for avoiding the optimization of artifacts. For instance, an optimum perturbation that minimizes ypert may be given by xpert equal to an image filled with zeroes.
+$y_{max} = M(x_o)_k$
 
-A post-processing procedure is then performed for analyzing the results. This step roughly consists on a (nonlinear) comparison between x0 and xpert along with some image processing for highlighting the important differences. This allows identifying relevant regions in x0. The identified regions are shown below to lead to intuitive interpretations of what the VGG19 model considers important in classifying images.
+where, k is the index of the maximum score class for input $x_o$. The goal here is to produce a perturbed input $x_p$ that minimizes the formerly top class value, i.e.,
+
+$M(x_p)_k \ll y_{max}$
+
+In generating the perturbation the input $x_o$ is fed to the CNN. The output after the CNN layers is scaled to resemble the original input's range. The resulting perturbed input $x_p$ is then passed through M and its output $y_p = M(x_p)_k$ is used for calculating the loss for back-propagation:
+
+loss = $y_p + l_1$
+
+where $l_1 = C_{l_1}|x_o - x_p|$, and $C_{l_1}$ is an adjustable coefficient. The loss is then back-propagated and minimized by iteratively modifying the weights and biases of the CNN model. The best CNN parameters allow generating an optimum perturbed input $x_p^{opt}$ that minimizes $y_p$ while at the same time attempting to keep the perturbation $x_p^{(opt)}$ as close as possible to the original input $x_o$. This is an important requirement for avoiding artifact optimization. For instance, $y_p$ may also be minimized by $x_p$ corresponding to an image filled with zeros.
+
+A post-processing procedure is then performed for analyzing the results. Briefly, this step consists of calculating the nonlinear difference $|x_o - x_p^{(opt)}|^6$ along with some image processing for further highlighting the important differences. This process allows identifying relevant regions in $x_o$ from the model M's point of view. 
 
 # 3. Pytorch implementation
 
-The details of the method outlined in Sec. 2 are presented through their implementation in [pytorch](https://pytorch.org/). The implementation below was inspired in part by the ideas discussed in [this paper](https://arxiv.org/abs/1704.03296) and its [pytorch implementation](https://github.com/jacobgil/pytorch-explain-black-box).
+The details of the method outlined in Sec. 2 are presented through their implementation in [pytorch](https://pytorch.org/). The implementation below was inspired in part by the ideas discussed in [this paper](https://arxiv.org/abs/1704.03296) and its [pytorch implementation](https://github.com/jacobgil/pytorch-explain-black-box). The particular model M studied here is the VGG19 model pre-trained on the imagenet dataset for image recognition.)
 
 ## 3.1 Preliminaries
 
@@ -81,12 +91,6 @@ and some helper functions:
 ```python
 def use_cuda():
     return torch.cuda.is_available()
-
-
-def image_tensor_to_numpy(tensor):
-    img = tensor.data.cpu().numpy()[0]
-    img = np.transpose(img, (1, 2, 0))
-    return img
 
 
 def image_tensor_to_numpy(tensor):
@@ -173,7 +177,7 @@ print vgg_model
     )
 
 
-### The image (x0 above):
+### The image (xo above):
 
 
 ```python
@@ -194,9 +198,9 @@ img = load_image(image_path)
 ![png](README_files/README_22_0.png)
 
 
-## 3.3 Transform the image to torch tensor
+## 3.3 Transforming the image to a torch tensor
 
-The image (currently a numpy ndarray) is transformed to a torch tensor and scaled so as to have a range of values suitable as inputs to the vgg_model.
+The image (currently a numpy ndarray) is transformed to a torch tensor and then scaled to a value range suitable for the vgg_model.
 
 
 ```python
@@ -298,7 +302,7 @@ vgg_input_assessment(img_tensor, vgg_model)
 
 ## 3.5 Build the perturbations generator
 
-For easy use of pytorch's gradient back-propagation, the perturbation is defined as a pytorch module.
+For easy use of pytorch's gradient back-propagation, the perturbation is defined here as a pytorch module. The padding of the conv layers is set such that the layer output has the same shape as the input (similar to the padding="same" setting in keras). This is important since the tensor has to keep the same dimensions to act as a 'perturbation' of the input.
 
 
 ```python
@@ -345,15 +349,17 @@ pert_model = PerturbationsGenerator(
 )
 ```
 
-As defined in the "forward" method, the input tensor goes through blocks of convolutional layers after which it is scaled to the range of the original input. This last step is important since the perturbed tensor x will be fed as input to vgg_model (and the original input has a suitable range for the vgg_model).
+As defined in the "forward" method, the input tensor goes through blocks of convolutional layers after which it is scaled to the range of the original input (as mentioned above, the original input has a suitable range for the vgg_model). This last step is required since the perturbated tensor x will be fed as input to vgg_model, which requires its input values to be within a pre-defined range.
 
 ## 3.6 Find an optimum perturbation
 
-The following back-propagates the gradient and runs gradient descent on a loss to find the CNN weights and biases that produce an optimum perturbation. The padding of the conv layers is set such that the layer output has the same shape as the input (similar to the padding="same" setting in keras). This is important since the tensor has to keep the same dimensions to act as a 'perturbation' of the input.
+The following code back-propagates small changes to the loss and optimizes the CNN weights and biases through gradient descent. This results in CNN parameters that generate an optimum perturbation (pert_img_tensor).
 
-Since the CNN parameters were defined within a pytorch module using native functions, it is very simple to setup the optimizer on these parameters: torch.optim.Adam(pert_model.parameters(), lr).
+Since the CNN parameters were defined within a pytorch module using native functions, it is very simple to setup the optimizer on these parameters by just invoking:
 
-The loss is defined as the value of the maximum class (for the original image) plus a measure of how different is the perturbed from the original image.
+torch.optim.Adam(pert_model.parameters(), lr).
+
+As mentioned above, the loss is defined as the value of the maximum class (for the original image) plus a measure of how different is the perturbated image from the original one.
 
 
 ```python
@@ -417,9 +423,11 @@ pert_img_tensor = get_optimum_perturbation(
 ![png](README_files/README_36_4.png)
 
 
-The optimization drastically pushed down the vgg_model's score by three orders of magnitude. When one sees the loss history above during a common neural net training, one thing to do would be to increase the batch size (to make to curve less noisy). But here we are restricted to only one sample... The learning rate could be decreased, but going too far may end up with the optimizer not optimizing.
+The optimization generated perturbed inputs that drastically pushed down the vgg_model's score by three orders of magnitude. 
 
-The optimum perturbated image is plotted along the original one next
+The loss history above is rather noisy. Since there is only one sample here, one cannot simply increase the batch size. The learning rate can be decreased, but going too far may end up with the optimizer not optimizing.
+
+To visualize the changes, the optimum perturbated image is plotted along the original one:
 
 
 ```python
@@ -450,16 +458,16 @@ fig.tight_layout()
 ![png](README_files/README_39_0.png)
 
 
-As intended, the perturbated image does not diverge much from the original image. The image background is not affected that much by the perturbation while, on the other hand, the cat's features are blurred. The [paper cited above]() basically uses an optimized blurring mask to identify the important parts of the image. [The automatically derived perturbation here](https://github.com/roberto1648/deep-explanation-using-ai-for-explaining-the-results-of-ai/blob/master/deep_explanation.py) can customize the operations applied to the image (as opposed to only attenuating its pixels). Moreover, the convolutional layers may nonlinearly mix the pixels in producing the optimum perturbation.
+As intended, the perturbated image does not diverge much from the original image. The image background is minimally affected by the perturbation while, on the other hand, the cat's features are considerably distorted. The [related previous work](https://arxiv.org/abs/1704.03296) mentioned above applies an optimized attenuating mask to identify the important parts of the image. [The CNN-constructed perturbation here](https://github.com/roberto1648/deep-explanation-using-ai-for-explaining-the-results-of-ai/blob/master/deep_explanation.py) can customize the operations applied to the image (as opposed to only attenuating its pixels). Moreover, the convolutional layers may nonlinearly mix the pixels in producing the optimum perturbation.
 
-Notice that the small cartoon at the upper right corner (that contains a cartoon cat face) has also been considerably modified by the perturbation.
+Notice that the small cartoon at the upper right corner (that contains a cat face) has also been considerably modified by the perturbation.
 
 ## 3.7 Post-processing
 
 In this step:
 - The tensors are transformed from torch to numpy arrays.
-- A power of the difference between the original and perturbated images is calculated and then processed to highlight the areas of the image that are seemingly most important in the vgg_model assigning a class to it. The difference is elevated here to a relatively high power (sixth). This works as a form of thresholding. Other powers may be used here for different models.
-- Features too close to the edge of the image are removed. This is because of possible artifacts that may be introduced due to padding with zeroes during the convolution operations above. A drawback is that valid features close to the edges (e.g., as the inserted cat face at the upper right corner) can be missed. But in most cases of interest the main image class is well represented inside the image.
+- A power of the difference between the original and perturbated images is calculated and then processed to highlight the image portions that are seemingly most important in the vgg_model assigning a class to this particular image. The difference is elevated here to a relatively high power (sixth). This works as a form of thresholding. Other powers may be used for different models.
+- Features too close to the edge of the image are removed. This is for preventing possible artifacts that may be introduced due to padding with zeros during the convolution operations. A drawback is that valid features close to the edges (e.g., as the inserted cat face at the upper right corner) can be missed. For most cases of interest the main image class is expected to be well represented within the image.
 
 
 ```python
@@ -493,7 +501,7 @@ diff, proc_img_np, pert_img_np = post_processing(
 )
 ```
 
-The extracted differences are plotted alongside the original and perturbed images:
+The extracted processed differences are plotted alongside the original and perturbed images:
 
 
 ```python
@@ -541,11 +549,11 @@ plot_results(
 ![png](README_files/README_45_0.png)
 
 
-Notice how the cat body is roughly shaded in the differences plot. Also, the most important features are located by the cat's head. Also shown is the center of mass calculated from all points in the differences matrix. The center of mass could be used to give an approximated location of a class in an image with a single instance of it. In cases when many instances are present on the same image, a clustering algorithm could be used to find their places.
+Notice how the cat's body is roughly outlined in the differences plot. Also, the most important features are located around the cat's head. Also shown is the center of mass calculated from the values and coordinates of all points in the differences matrix. The center of mass could be used for extracting an approximated location of a class in an image when a single instance of the class is present. For cases in which many class instances are present in the same image a clustering algorithm may be used to find their places.
 
 # 4. Applications
 
-The program is now applied to several (i.e., cat and non-cat) [images](https://github.com/roberto1648/deep-explanation-using-ai-for-explaining-the-results-of-ai/tree/master/data/image_samples). All the functions above can be found in [deep_explanation.py](https://github.com/roberto1648/deep-explanation-using-ai-for-explaining-the-results-of-ai/blob/master/deep_explanation.py) along side the main() function that runs all the steps.
+The program is now applied to several (i.e., cat and non-cat) [images](https://github.com/roberto1648/deep-explanation-using-ai-for-explaining-the-results-of-ai/tree/master/data/image_samples). All the functions above can be found in [deep_explanation.py](https://github.com/roberto1648/deep-explanation-using-ai-for-explaining-the-results-of-ai/blob/master/deep_explanation.py) alongside the main() function that runs all the steps.
 
 
 ```python
@@ -637,7 +645,7 @@ proc_img_np, pert_img_np, diff = deep_explanation.main(
 ![png](README_files/README_51_5.png)
 
 
-The darkest point coincides with one of th eyes. Notice the horizontal striations inserted by the program on the puppy's face. The original image has one of such striations (by coordinates (110, 120)). It might be that the program used that as a suitable "seed" perturbation.
+The darkest point coincides with one of the eyes. Notice the horizontal striations inserted by the program on the puppy's face. The original image has some of such striations (e.g., by coordinates (110, 120)). It appears that the program used the striations as "seed" perturbations and then exaggerated/propagated them. By their nature, the convolutional layers can easily accomplish such feature propagation through the image.
 
 
 ```python
@@ -682,7 +690,7 @@ proc_img_np, pert_img_np, diff = deep_explanation.main(
 ![png](README_files/README_53_5.png)
 
 
-The darkest spot corresponds here to the headlight and there are other important points by the tires.
+The darkest spot corresponds here to the headlight and there are other important differences by the tires.
 
 
 ```python
@@ -727,7 +735,7 @@ proc_img_np, pert_img_np, diff = deep_explanation.main(
 ![png](README_files/README_55_5.png)
 
 
-The arm of the excavator is highlighted here. Notice that the top class was supposed to be here "crane" in which case the arm would indeed be a more important feature.
+The arm of the excavator is highlighted here. Notice that, according to the vgg_model, the top class was supposed to be here "crane" in which case the arm would indeed be a more important feature than the tip.
 
 
 ```python
@@ -820,14 +828,14 @@ proc_img_np, pert_img_np, diff = deep_explanation.main(
 ![png](README_files/README_59_5.png)
 
 
-This one was hard enough so as to confuse VGG (and trigger my little warning). Since the supposed highest class was "matchstick" here, the program highlighted the edges around two of the boxes in the image: the boxes' edges do resemble matches.
+This one was hard enough so as to confuse VGG (and trigger my little warning). Since the supposed highest class here was "matchstick", the program highlighted the edges around two of the boxes in the image: the boxes' edges do resemble matches.
 
-As seen in the examples above, the program not only roughly finds the area occupied by the top class, but also points to individual features of the located object. In the case of VGG19 the highlighted features both make intuitive sense and confirm the quality of the model.
+As seen in the examples above, the program developed here not only roughly finds the area occupied by the top class, but also points to individual features of the located object. In the case of VGG19 the highlighted features both make intuitive sense and confirm the quality of the model.
 
 # 5. Conclusions
 
-An algorithm was developed for extracting information about the criteria used by an image recognition model in classifying images. The algorithm finds an optimum perturbation that minimizes the top class score while attempting to keep the image as close as possible to the original image. Importantly, the perturbations are designed by a convolutional neural network (CNN) whose weights are optimized to produce the optimum perturbation. The use of a CNN for generating perturbations allows for a variety of nonlinear perturbations that are customized to the particular image.
+An algorithm was developed for extracting information about the criteria used by an image recognition model in classifying images. The algorithm finds an optimum perturbation that minimizes the top class score while attempting to keep the image as close as possible to the original image. Importantly, the perturbations are designed by a convolutional neural network (CNN) whose weights and biases are optimized to produce an optimum perturbation. The use of a CNN for generating perturbations allows for a variety of nonlinear perturbations that are customized to the particular image.
 
-Highlighting the important parts of the inputs made intuitive sense in the case of images. Similarly, for text or video models the program may be able to highlight crucial words or features in particular frames, respectively.
+Highlighting the important parts of the inputs made intuitive sense here for the case of images. Similarly, for text or video models the program may be able to highlight crucial words or features in particular frames, respectively. Since the form of the perturbations is learned by the CNN, no expert knowledge is required in applying the developed program for a variety of models.
 
-Due to the reliance on pytorch's built-in back-propagation, the particular implementation given here is limited to analyzing models implemented in pytorch. The number of such models is currently growing along with pytorch's popularity. It might be possible to analyze other (i.e., not implemented yet in pytorch) models by sampling the class scores for various images such that an approximate linear inverse model could be obtained. This can then be used to define the "backward" method of the model in pytorch.
+Due to its reliance on pytorch's built-in back-propagation, the particular implementation given here is limited to analyzing models implemented in pytorch. The number of such models is currently growing along with pytorch's raising popularity. It might be possible to analyze other (i.e., not implemented yet in pytorch) models by sampling the class scores for various images such that an approximate linear or polynomial inverse model could be obtained. This can then be used to define the "backward" method of the model in pytorch.
